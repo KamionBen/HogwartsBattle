@@ -19,7 +19,7 @@
         "year": 1,
         "name": "RUBEUS HAGRID",
         "genre": "allié",
-        "description": "Gagnez 1 !éclair. CHAQUE Héros gagne 1 !coeur.",
+        "description": "Gagnez 1 !éclair. \nCHAQUE Héros gagne 1 !coeur.",
         "cost": 4,
         "nb": 1,
         "mechanics": {
@@ -33,7 +33,7 @@
         "year": 1,
         "name": "OLIVIER DUBOIS",
         "genre": "allié",
-        "description": "Gagnez 1 !éclair. Si vous parvenez à vaincre un Ennemi, un Héros au choix gagne 2 !coeur.",
+        "description": "Gagnez 1 !éclair. \nSi vous parvenez à vaincre un Ennemi, un Héros au choix gagne 2 !coeur.",
         "cost": 3,
         "nb": 1,
         "mechanics": {
@@ -91,7 +91,7 @@
         "year": 1,
         "name": "CHOIXPEAU MAGIQUE",
         "genre": "objet",
-        "description": "Gagnez 2 !mornille. Vous pouvez poser les Alliès que vous acquérez sur votre deck au lieu de les placer dans votre défausse.",
+        "description": "Gagnez 2 !mornille. \nVous pouvez poser les Alliès que vous acquérez sur votre deck au lieu de les placer dans votre défausse.",
         "cost": 4,
         "nb": 1,
         "mechanics": {
@@ -107,7 +107,7 @@
         "year": 1,
         "name": "WINGARDIUM LEVIOSA !",
         "genre": "sort",
-        "description": "Gagnez 1 !mornille. Vous pouvez poser les Objets que vous acquérez sur votre deck au lieu de les placer dans votre défausse.",
+        "description": "Gagnez 1 !mornille. \nVous pouvez poser les Objets que vous acquérez sur votre deck au lieu de les placer dans votre défausse.",
         "cost": 2,
         "nb": 3,
         "mechanics": {
@@ -123,7 +123,7 @@
         "year": 1,
         "name": "REPARO !",
         "genre": "sort",
-        "description": "Résolvez un effet au choix : Gagnez 2 !mornilles ou piochez 1 carte.",
+        "description": "Résolvez un effet au choix : \nGagnez 2 !mornilles ou piochez 1 carte.",
         "cost": 3,
         "nb": 6,
         "mechanics": {
@@ -177,7 +177,7 @@
         "year": 2,
         "name": "Polynectar",
         "genre": "objet",
-        "description": "Choisissez un Allié que vous avez jouez pendant ce tour; vous pouvez copier ses. Effets grâce à cet Objet.",
+        "description": "Choisissez un Allié que vous avez jouez pendant ce tour; vous pouvez copier ses effets grâce à cet Objet.",
         "cost": 3,
         "nb": 2,
         "mechanics": {}

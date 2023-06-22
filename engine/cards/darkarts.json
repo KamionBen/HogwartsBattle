@@ -30,28 +30,28 @@
     {
         "year": 2,
         "name": "MAIN DE LA GLOIRE",
-        "description": "Le Héros actif perd 1 !coeur. Ajoutez 1 !marque sur le Lieu.",
+        "description": "Le Héros actif perd 1 !coeur. \nAjoutez 1 !marque sur le Lieu.",
         "mechanics": {"instant":  ["DAMAGEACTIVE_1", "CONTROL_1"]},
         "nb": 2
     },
     {
         "year": 2,
         "name": "POISON",
-        "description": "CHAQUE Héros résout un effet au choix : Défaussez 1 Allié ou perdez 2 !coeur.",
+        "description": "CHAQUE Héros résout un effet au choix : \nDéfaussez 1 Allié ou perdez 2 !coeur.",
         "mechanics": {"choiceall":  ["DISCARD_ALLY", "DAMAGESELF_2"]},
         "nb": 1
     },
     {
         "year": 2,
         "name": "LASHLABASK !",
-        "description": "CHAQUE Héros résout un effet au choix : Défaussez 1 Objet ou perdez 2 !coeur",
+        "description": "CHAQUE Héros résout un effet au choix : \nDéfaussez 1 Objet ou perdez 2 !coeur",
         "mechanics": {"choiceall":  ["DISCARD_OBJECT", "DAMAGESELF_2"]},
         "nb": 1
     },
     {
         "year": 2,
         "name": "OUBLIETTES !",
-        "description": "CHAQUE Héros résout un effet au choix: Défaussez 1 Sort ou perdez 2 !coeur",
+        "description": "CHAQUE Héros résout un effet au choix: \nDéfaussez 1 Sort ou perdez 2 !coeur",
         "mechanics": {"choiceall":  ["DISCARD_SPELL", "DAMAGESELF_2"]},
         "nb": 1
     }

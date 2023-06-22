@@ -2,7 +2,8 @@ import json
 from random import shuffle
 import pygame
 from pygame.locals import SRCALPHA
-from engine import prepare
+from engine import prepare, pg_func
+
 from os import path
 
 """ MOTHER CLASSES """
@@ -102,38 +103,14 @@ class OrderedDeck:
 
 """ DAUGHTER CLASSES """
 
-location_dict = {"Chemin de Traverse": 'images/locations/diagonalley.png',
-                 "Miroir du Risèd": 'images/locations/diagonalley.png',
-                 "Forêt Interdite": 'images/locations/forest.png',
-                 "Terrain de Quidditch": 'images/locations/quidditch.png',
-                 "Chambre des Secrets": 'images/locations/chamber.png'}
 
 
-mark = pygame.image.load('images/tokens/marque.png').convert_alpha()
-darkarts = pygame.image.load(('images/tokens/darkarts.png')).convert_alpha()
 
 
-def outline(surface, color='white', outline_only=False) -> pygame.Surface:
-    convolution_mask = pygame.mask.Mask((3, 3), fill=True)
-    convolution_mask.set_at((0, 0), value=0)
-    convolution_mask.set_at((2, 0), value=0)
-    convolution_mask.set_at((0, 2), value=0)
-    convolution_mask.set_at((2, 2), value=0)
-    mask = pygame.mask.from_surface(surface)
-    surface_outline = mask.convolve(convolution_mask).to_surface(setcolor=color,
-                                                                      unsetcolor=surface.get_colorkey())
-    if outline_only:
-        mask_surface = mask.to_surface()
-        mask_surface.set_colorkey(color)
-
-        surface_outline.blit(mask_surface, (1, 1))
-    else:
-        surface_outline.blit(surface, (1, 1))
-    return surface_outline
 
 
 class Location(Card):
-    def __init__(self, year, order, name, events_nb, control_nb):
+    def __init__(self, year, order, name, events_nb, control_nb, image_file):
         """ Une carte Lieu """
         Card.__init__(self, name, year)
         self.order = order  # (current, total)
@@ -144,14 +121,22 @@ class Location(Card):
         self.image = pygame.Surface((1920, 720), SRCALPHA, 32)
         self.rect = self.image.get_rect()
 
+        self._img_file = image_file
         self._background = self.image.copy()
+
+        self.anim_tick = 0
+        self.blink_list = []
+        self.alert = None
+
         self._load()
         self.update()
+
+
 
     def _load(self):
         """ Load the images and create the fixed image """
         """ Blit image """
-        img = pygame.image.load(location_dict[self.name]).convert_alpha()
+        img = pygame.image.load(path.join('images/locations', self._img_file)).convert_alpha()
         self._background.blit(img, (0,0))
         """ Create horizontal and vertical gradients"""
         for i in range(256):
@@ -163,48 +148,58 @@ class Location(Card):
             self._background.blit(v_stripe, (i*3, 0))
         """ Display the number of dark events """
         for i in range(self.event_nb):
-            da = pygame.transform.scale(darkarts, (40, 40))
-            outlined = outline(da)
+            da = pygame.transform.scale(prepare.DARKARTS, (40, 40))
+            outlined = pg_func.outline(da)
             self._background.blit(outlined, (200 + i * 50, 11))
         """ Order and shadow """
         lieu = prepare.AQUIFER.M.render(f"LIEU {self.order[0]}/{self.order[1]}", True, 'yellow')
         shdw = prepare.AQUIFER.M.render(f"LIEU {self.order[0]}/{self.order[1]}", True, 'black')
-        self._background.blit(shdw, (22, 22))
+
+        self._background.blit(pg_func.outline(shdw, 'black'), (22, 22))
         self._background.blit(lieu, (20, 20))
         """ Name and shadow """
+
         name = prepare.ENCHANTED.XL.render(self.name, True, 'white')
         shdw = prepare.ENCHANTED.XL.render(self.name, True, 'black')
-        self._background.blit(shdw, (22, 52))
+        self._background.blit(pg_func.outline(shdw, 'black'), (22, 52))
         self._background.blit(name, (20, 50))
+        """ Alert """
+        self.alert = pygame.Surface((name.get_width(), name.get_height()), SRCALPHA, 32).convert_alpha()
+        alert = prepare.ENCHANTED.XL.render(self.name, True, (255, 0, 0))
+        self.alert.blit(alert, (0,0))
+
         """ Background token images """
         for i in range(self.control_nb_max):
-            inactive_mark = pygame.transform.grayscale(mark)
+            inactive_mark = pygame.transform.grayscale(prepare.MARK)
             inactive_mark.set_alpha(128)
             self._background.blit(inactive_mark, (50 + i * 50, 135 + (i % 2*10)))
 
+        high = [(2/7)*x**2 for x in range(30)]
+        low = high.copy()
+        low.reverse()
+        self.blink_list = [0 for _ in range(15)] + high + low + [0 for _ in range(15)]
+        self.blink_list = [int(e) for e in self.blink_list]
+
+
     def update(self):
-
-        self.image.blit(self._background, (0,0))
-
-        for i in range(self.control_nb + 1):
+        """ Change the numbers of tokens """
+        self.image.blit(self._background, (0, 0))
+        for i in range(self.control_nb):
             position = (50 + i * 50, 135 + (i % 2*10))
+            self.image.blit(prepare.MARK, position)
 
-            self.image.blit(mark, position)
-
-
-
+        if self.is_dead():
+            tick = pygame.time.get_ticks()
+            tick = int(tick//(100/3) % len(self.blink_list))
+            alert = self.alert.copy()
+            alert.set_alpha(self.blink_list[tick])
+            self.image.blit(alert, (20, 50))
 
     def is_dead(self):
         return self.control_nb == self.control_nb_max
 
     def add_token(self, nb=1):
         self.control_nb = min(self.control_nb + nb, self.control_nb_max)
-
-#TOKEN = pygame.image.load("images/tokens/attack.png").convert_alpha()
-
-txt_dict = {"CONTROL_DAMAGEACTIVE_2": "Chaque fois qu'une marque est ajoutée sur le Lieu, le Héros actif perd 2 coeurs",
-                    "FORCED_DISCARD_DAMAGE_1": "Chaque fois qu'un Ennemi ou un évènement Forces du Mal oblige un Héros à défausser une carte, ce Héros perd également 1 coeur.",
-                    "CANT_PICK": "Vous ne pouvez plus piocher de cartes"}
 
 
 class Villain(Card):
@@ -310,57 +305,42 @@ class Hogwarts(Card):
         self.mechanics = mechanics
 
         # Card size : 6.3 / 8.7
-        self.image = pygame.Surface((189, 261), SRCALPHA, 32)
+        self.image = pygame.Surface((252, 348), SRCALPHA, 32)
         self.rect = self.image.get_rect()
         self.active = False
 
+        self._load()
+
+    def _load(self):
+        """ Create the image """
+        colors = {"objet": prepare.YELLOW, "sort": prepare.RED, "allié": prepare.BLUE}
+
+        pygame.draw.rect(self.image, (40, 40, 40), self.rect, border_radius=8)
+        pygame.draw.rect(self.image, (165, 160, 112), (0, 174, 252, 159))
+        pygame.draw.rect(self.image, colors[self.genre], (30, 164, 192, 20))
+
+        genre = prepare.AQUIFER.XS.render(self.genre.upper(), True, 'white')
+        shdw = prepare.AQUIFER.XS.render(self.genre.upper(), True, 'black')
+        self.image.blit(shdw, ((self.rect.width - genre.get_width()) / 2 + 1, 164 + 1))
+        self.image.blit(genre, ((self.rect.width - genre.get_width()) / 2, 164))
+
+        text = f"{self.name.upper()}\n{self.description}"
+        replaces = {'!éclairs': 'éclairs'.upper(), '!éclair': 'éclair'.upper(),
+                    '!mornilles': 'MORNILLES', '!mornille': 'MORNILLE',
+                    '!coeurs': 'COEURS', '!coeur': 'COEUR'}
+        for k, v in replaces.items():
+            text = text.replace(k, v)
+        text = text.replace('\n', '\n\n')
+        pg_text = pg_func.render_textrect(text, font=prepare.AQUIFER.XS, text_color='black', rect=pygame.Rect(0,0, 248, 174))
+
+        self.image.blit(pg_text, (2, 194))
+
+        self.image.blit(pg_func.outline(prepare.INFLUENCE, 'black'), (210, 300))
+        cost = prepare.AQUIFER.M.render(str(self.cost), True, 'white')
+        self.image.blit(cost, (222, 306))
+
     def update(self):
         """"""
-        """ FRAME 
-        pygame.draw.rect(self.image, (40, 40, 40), (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=5)
-        pygame.draw.rect(self.image, 'grey', (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=5, width=2)
-
-        
-        posy = 10
-        genre_colors = {'objet': YELLOW, 'sort': RED, 'allié': BLUE}
-        genre = AQUIFER[16].render(self.genre.upper(), True, 'white')
-        pygame.draw.rect(self.image, genre_colors[self.genre], (10, posy, self.rect.width - 20, 20))
-        self.image.blit(genre, ((self.rect.width - genre.get_width()) / 2, posy + 2))
-
-      
-        posy = 50
-        text = AQUIFER[16].render(self.name.upper(), True, 'white')
-        self.image.blit(text, ((self.rect.width-text.get_width())/2, posy))
-
-       
-        posy = 100
-        limit = 25
-        phrase_ls = []
-        string = ""
-        #description = self.description.replace("!coeur", "♥️")
-        for word in self.description.split(" "):
-            if len(string + " " + word) < limit:
-                string = string + " " + word
-            else:
-                phrase_ls.append(string)
-                string = word
-        phrase_ls.append(string)
-        for i, phrase in enumerate(phrase_ls):
-            description = FONT[20].render(phrase, True, 'white')
-            self.image.blit(description, ((self.rect.width - description.get_width()) / 2, posy + i * 20))
-
-       
-        if self.active:
-            cost_color = 'green'
-        else:
-            cost_color = 'white'
-        posy = 230
-        cost = AQUIFER[28].render(str(self.cost), True, cost_color)
-        self.image.blit(cost, (150, posy))
-        """
-
-
-
 
 
 
