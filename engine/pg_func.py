@@ -67,7 +67,8 @@ def render_textrect(string, font, rect, text_color, background_color=(0,0,0,0), 
             # if any of our words are too long to fit, return.
             for word in words:
                 if font.size(word)[0] >= rect.width:
-                    raise TextRectException("The word " + word + " is too long to fit in the rect passed.")
+                    words = requested_line.split('-')
+                    #raise TextRectException("The word " + word + " is too long to fit in the rect passed.")
             # Start a new line
             accumulated_line = ""
             for word in words:

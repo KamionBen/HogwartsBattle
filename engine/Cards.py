@@ -6,6 +6,16 @@ from engine import prepare, pg_func
 
 from os import path
 
+
+def clean_text(text):
+    replaces = {'!éclairs': 'éclairs'.upper(), '!éclair': 'éclair'.upper(),
+                '!mornilles': 'MORNILLES', '!mornille': 'MORNILLE',
+                '!coeurs': 'COEURS', '!coeur': 'COEUR'}
+    for k, v in replaces.items():
+        text = text.replace(k, v)
+    return text
+
+
 """ MOTHER CLASSES """
 
 
@@ -63,10 +73,24 @@ class Deck(pygame.sprite.Group):
         return self._cards[index]
 
 
-class OrderedDeck:
+class OrderedDeck(pygame.sprite.Sprite):
     def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
         """ Represent and manage de 6 Hogwarts cards """
         self._cards = [None for _ in range(6)]
+
+        self.image = pygame.Surface((400, 600), SRCALPHA, 32)
+        self.rect = self.image.get_rect()
+
+    def get_image(self):
+        # (252, 348)
+        image = pygame.Surface((781, 716), SRCALPHA, 32)
+        #image.fill('blue')
+        for i, card in enumerate(self._cards):
+            if card is not None:
+                position = (5 + (i % 3) * 257, 5 + (i % 2) * 353)
+                image.blit(pg_func.outline(card.image), position)
+        return pygame.transform.scale_by(image, 0.7)
 
     def get_vacant(self):
         vacant = 0
@@ -84,7 +108,7 @@ class OrderedDeck:
                     self._cards[i] = newcard
                     break
 
-    def remove(self, rm_card):
+    def remove(self, rm_card: Card):
         found = False
         for i, card in enumerate(self._cards):
             if card == rm_card:
@@ -270,11 +294,28 @@ class DarkArts(Card):
         self.description = description
         self.mechanics = mechanics
 
-        self.image = pygame.Surface((228, 228))
+        self.image = pygame.Surface((300, 150))
         self.rect = self.image.get_rect()
 
+        self._load()
+
+    def _load(self):
+        pygame.draw.rect(self.image, (40,40,40), self.rect, border_radius=8)
+        pygame.draw.rect(self.image, 'white', self.rect, width=1, border_radius=8)
+
+        pygame.draw.rect(self.image, 'grey', (75, 2, 150, 20))
+        event = prepare.AQUIFER.XS.render("évènement".upper(), True, 'black')
+        self.image.blit(event, ((300-event.get_width())/2, 3))
+        text = clean_text(self.name.upper() + '\n' + self.description)
+        text = text.replace('\n', '\n\n')
+        surf = pg_func.render_textrect(text, prepare.AQUIFER.XS, pygame.Rect(0, 0, 290, 120), 'white')
+        self.image.blit(surf, (5, 30))
+
+
+
+
     def update(self):
-        self.image.fill('black')
+
         """
         pygame.draw.rect(self.image, (40,40,40), (1,1,self.rect.width-2,self.rect.height-2), border_radius=5)
         text = AQUIFER[24].render(self.name, True, 'white')
@@ -309,20 +350,23 @@ class Hogwarts(Card):
         self.rect = self.image.get_rect()
         self.active = False
 
+        self.small = None
+
         self._load()
 
     def _load(self):
         """ Create the image """
+        top = 10
         colors = {"objet": prepare.YELLOW, "sort": prepare.RED, "allié": prepare.BLUE}
 
         pygame.draw.rect(self.image, (40, 40, 40), self.rect, border_radius=8)
-        pygame.draw.rect(self.image, (165, 160, 112), (0, 174, 252, 159))
-        pygame.draw.rect(self.image, colors[self.genre], (30, 164, 192, 20))
+        pygame.draw.rect(self.image, (165, 160, 112), (0, top + 30, 252, 159))
+        pygame.draw.rect(self.image, colors[self.genre], (30, top, 192, 20))
 
         genre = prepare.AQUIFER.XS.render(self.genre.upper(), True, 'white')
         shdw = prepare.AQUIFER.XS.render(self.genre.upper(), True, 'black')
-        self.image.blit(shdw, ((self.rect.width - genre.get_width()) / 2 + 1, 164 + 1))
-        self.image.blit(genre, ((self.rect.width - genre.get_width()) / 2, 164))
+        self.image.blit(shdw, ((self.rect.width - genre.get_width()) / 2 + 1, top + 1))
+        self.image.blit(genre, ((self.rect.width - genre.get_width()) / 2, top))
 
         text = f"{self.name.upper()}\n{self.description}"
         replaces = {'!éclairs': 'éclairs'.upper(), '!éclair': 'éclair'.upper(),
@@ -331,13 +375,16 @@ class Hogwarts(Card):
         for k, v in replaces.items():
             text = text.replace(k, v)
         text = text.replace('\n', '\n\n')
-        pg_text = pg_func.render_textrect(text, font=prepare.AQUIFER.XS, text_color='black', rect=pygame.Rect(0,0, 248, 174))
+        pg_text = pg_func.render_textrect(text, font=prepare.TIMES.XS, text_color='black', rect=pygame.Rect(0,0, 248, 174))
 
-        self.image.blit(pg_text, (2, 194))
+        self.image.blit(pg_text, (2, top + 35))
 
-        self.image.blit(pg_func.outline(prepare.INFLUENCE, 'black'), (210, 300))
-        cost = prepare.AQUIFER.M.render(str(self.cost), True, 'white')
-        self.image.blit(cost, (222, 306))
+        if self.cost > 0:
+            self.image.blit(pg_func.outline(prepare.INFLUENCE, 'black'), (210, top + 170))
+            cost = prepare.AQUIFER.M.render(str(self.cost), True, 'white')
+            self.image.blit(cost, (222, 187))
+
+        self.small = pygame.transform.scale_by(self.image, 0.7)
 
     def update(self):
         """"""
@@ -415,20 +462,20 @@ def import_basedeck(character) -> Deck:
 class Recto(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((189, 261), SRCALPHA, 32)
+        self.image = pygame.Surface((252, 348), SRCALPHA, 32)
         self.rect = self.image.get_rect()
         self.logo = pygame.image.load('images/blason.png').convert_alpha()
         self.update()
 
     def update(self):
         """ FRAME """
-        pygame.draw.rect(self.image, (40, 40, 40), (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=5)
-        pygame.draw.rect(self.image, 'grey', (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=5,
+        pygame.draw.rect(self.image, (40, 40, 40), (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=8)
+        pygame.draw.rect(self.image, 'grey', (1, 1, self.rect.width - 2, self.rect.height - 2), border_radius=8,
                          width=2)
         logo = pygame.transform.grayscale(self.logo)
-        logo = pygame.transform.scale(logo, (100, 100))
+        logo = pygame.transform.scale(logo, (200, 200))
         logo.set_alpha(50)
-        self.image.blit(logo, ((189-100)/2, (261-100)/2))
+        self.image.blit(logo, ((252-200)/2, (348-200)/2))
 
 
 if __name__ == '__main__':
