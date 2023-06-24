@@ -24,6 +24,7 @@ class Game(common.State):
         self.character = Character.Character('Ron Weasley')
         self.character.pick_five()
         self.character.active = True
+        self.character2 = Character.Character('Hermione Granger')
 
         self.focus_button = []
 
@@ -110,7 +111,9 @@ class Game(common.State):
         self.image.blit(self.darkarts[0].image, (810, 60))
         self.image.blit(self.board.get_image(), (1370, 5))
         pygame.draw.rect(self.image, 'green', (1370, 5, 547, 501), width=1)
-        self.image.blit(self.character.image, (300, 580))
+        self.image.blit(self.character.image, self.character.rect)
+        self.image.blit(self.character2.image, self.character.rect)
+
 
         left = (1070 + (252 * len(self.character.hand))) / 2
         for i, card in enumerate(self.character.hand):
